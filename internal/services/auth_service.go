@@ -64,19 +64,16 @@ func (s *authService) Register(input RegisterInput) (uint, error) {
 		return 0, err
 	}
 
-	s.logger.Info("User registered successfully", "username", user.Username)
 	return user.ID, nil
 }
 
 func (s *authService) Login(input LoginInput) (string, string, error) {
 	user, err := s.userRepo.FindByUsername(input.Username)
 	if err != nil {
-		s.logger.Warn("Login failed: user not found", "username", input.Username)
 		return "", "", errors.New("invalid username or password")
 	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
-		s.logger.Warn("Login failed: password mismatch", "username", input.Username)
 		return "", "", errors.New("invalid username or password")
 	}
 
@@ -98,7 +95,6 @@ func (s *authService) Login(input LoginInput) (string, string, error) {
 		return "", "", err
 	}
 
-	s.logger.Info("User logged in successfully", "username", user.Username)
 	return accessToken, refreshToken, nil
 }
 
@@ -125,7 +121,6 @@ func (s *authService) RefreshToken(userID uint, refreshToken string) (string, er
 		return "", err
 	}
 
-	s.logger.Info("Access token refreshed successfully", "username", user.Username)
 	return newAccessToken, nil
 }
 
@@ -135,6 +130,5 @@ func (s *authService) Logout(userID uint) error {
 		s.logger.Error("Failed to delete refresh token on logout", "userID", userID, "error", err)
 		return err
 	}
-	s.logger.Info("User logged out", "userID", userID)
 	return nil
 }
