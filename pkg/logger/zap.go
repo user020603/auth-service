@@ -60,7 +60,7 @@ func NewLogger(level string, logFile string) (ILogger, error) {
 			zapLevel,
 		)
 
-		logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+		logger := zap.New(core, zap.AddCaller())
 		instance = &Logger{
 			zap: logger.Sugar(),
 		}

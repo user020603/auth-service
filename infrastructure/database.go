@@ -3,7 +3,6 @@ package infrastructure
 import (
 	"fmt"
 	"thanhnt208/vcs-sms/auth-service/configs"
-	"thanhnt208/vcs-sms/auth-service/pkg/logger"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -11,23 +10,20 @@ import (
 )
 
 type Database struct {
-	db     *gorm.DB
-	logger logger.ILogger
+	db *gorm.DB
 }
 
-func NewDatabase(cfg *configs.Config, logger logger.ILogger) (IDatabase, error) {
+func NewDatabase(cfg *configs.Config) (IDatabase, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		logger.Fatal("Failed to connect to database", "error", err)
 		return nil, err
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		logger.Fatal("Failed to get database instance", "error", err)
 		return nil, err
 	}
 
@@ -35,11 +31,8 @@ func NewDatabase(cfg *configs.Config, logger logger.ILogger) (IDatabase, error) 
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	logger.Info("Connected to database", "host", cfg.DBHost, "port", cfg.DBPort)
-
 	return &Database{
-		db:     db,
-		logger: logger,
+		db: db,
 	}, nil
 }
 

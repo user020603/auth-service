@@ -60,7 +60,6 @@ func (s *authService) Register(input RegisterInput) (uint, error) {
 
 	err = s.userRepo.Create(user)
 	if err != nil {
-		s.logger.Error("Failed to create user", "username", input.Username, "error", err)
 		return 0, err
 	}
 

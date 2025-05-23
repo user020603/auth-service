@@ -20,6 +20,8 @@ type Config struct {
 	JWTSecret       string
 	JWTExpiresIn    int
 	RefreshTokenTTL int
+	LogLevel        string
+	LogFile         string
 }
 
 var (
@@ -52,6 +54,8 @@ func LoadConfig() *Config {
 			JWTSecret:       getEnv("JWT_SECRET", "supersecretkey"),
 			JWTExpiresIn:    jwtExpiresIn,
 			RefreshTokenTTL: refreshTokenTTL,
+			LogLevel:        getEnv("LOG_LEVEL", "info"),
+			LogFile:         getEnv("LOG_FILE", "../logs/app.log"),
 		}
 	})
 	return configInstance
