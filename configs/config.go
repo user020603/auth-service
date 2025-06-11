@@ -55,7 +55,7 @@ func LoadConfig() *Config {
 			JWTExpiresIn:    jwtExpiresIn,
 			RefreshTokenTTL: refreshTokenTTL,
 			LogLevel:        getEnv("LOG_LEVEL", "info"),
-			LogFile:         getEnv("LOG_FILE", "../logs/app.log"),
+			LogFile:         getEnv("LOG_FILE", "../logs/auth.log"),
 		}
 	})
 	return configInstance
