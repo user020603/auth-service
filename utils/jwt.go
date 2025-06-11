@@ -10,7 +10,7 @@ import (
 var jwtSecret = []byte(configs.LoadConfig().JWTSecret)
 
 type Claims struct {
-	UserID   uint   `json:"userId"`
+	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
 	jwt.RegisteredClaims
