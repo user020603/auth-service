@@ -1,0 +1,16 @@
+2025-06-11T07:54:13.037+0700	info	logger/zap.go:85	[INFO] Connected to database	{"host": "localhost", "port": "5432"}
+2025-06-11T07:54:13.041+0700	info	logger/zap.go:85	[INFO] Connected to Redis	{"address": "localhost:6379"}
+2025-06-11T07:54:13.041+0700	info	logger/zap.go:85	[INFO] Starting server	{"port": "8000"}
+2025-06-11T07:54:20.535+0700	error	logger/zap.go:93	[ERROR] Failed to register user	{"error": "ERROR: relation \"users\" does not exist (SQLSTATE 42P01)"}
+2025-06-11T07:55:00.008+0700	info	logger/zap.go:85	[INFO] User registered successfully	{"userId": 1}
+2025-06-11T07:56:40.112+0700	error	logger/zap.go:93	[ERROR] Failed to login user	{"username": "tienthanh", "error": "invalid username or password"}
+2025-06-11T07:56:53.728+0700	info	logger/zap.go:85	[INFO] User logged in successfully	{"username": "thanhnt"}
+2025-06-11T08:13:31.805+0700	info	logger/zap.go:85	[INFO] Connected to database	{"host": "localhost", "port": "5432"}
+2025-06-11T08:13:31.823+0700	info	logger/zap.go:85	[INFO] Connected to Redis	{"address": "localhost:6379"}
+2025-06-11T08:13:31.823+0700	info	logger/zap.go:85	[INFO] Starting server	{"port": "8000"}
+2025-06-11T08:13:35.083+0700	info	logger/zap.go:85	[INFO] User logged in successfully	{"username": "thanhnt"}
+2025-06-11T08:15:46.635+0700	error	logger/zap.go:93	[ERROR] Failed to register user	{"error": "ERROR: duplicate key value violates unique constraint \"users_email_key\" (SQLSTATE 23505)"}
+2025-06-11T08:15:54.982+0700	info	logger/zap.go:85	[INFO] User registered successfully	{"userId": 3}
+2025-06-11T08:16:16.267+0700	info	logger/zap.go:85	[INFO] User logged in successfully	{"username": "thanhnt2"}
+2025-06-11T08:41:46.954+0700	info	logger/zap.go:85	[INFO] User logged in successfully	{"username": "thanhnt2"}
+2025-06-11T08:51:21.720+0700	info	logger/zap.go:85	[INFO] User logged in successfully	{"username": "thanhnt2"}
