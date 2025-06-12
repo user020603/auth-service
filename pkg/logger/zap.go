@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -35,9 +34,11 @@ func NewLogger(level string, logFile string) (ILogger, error) {
 		encoderConfig := zap.NewProductionEncoderConfig()
 		encoderConfig.TimeKey = "timestamp"
 		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
 
 		var zapLevel zapcore.Level
 		if err := zapLevel.Set(level); err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid log level: %s\n", level)
 			zapLevel = zapcore.InfoLevel
 		}
 
@@ -45,10 +46,10 @@ func NewLogger(level string, logFile string) (ILogger, error) {
 		if logFile != "" {
 			writer = zapcore.AddSync(&lumberjack.Logger{
 				Filename:   logFile,
-				MaxSize:    10, // megabytes
-				MaxBackups: 3,
-				MaxAge:     28, // days
-				Compress:   true,
+				MaxSize:    10,   // megabytes
+				MaxBackups: 3,    // number of backups
+				MaxAge:     28,   // days
+				Compress:   true, // compress the backups
 			})
 		} else {
 			writer = zapcore.AddSync(os.Stdout)
@@ -60,14 +61,14 @@ func NewLogger(level string, logFile string) (ILogger, error) {
 			zapLevel,
 		)
 
-		logger := zap.New(core, zap.AddCaller())
+		logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 		instance = &Logger{
 			zap: logger.Sugar(),
 		}
 	})
 
 	if instance == nil {
-		return nil, errors.New("logger instance is nil")
+		return nil, fmt.Errorf("failed to create logger instance")
 	}
 
 	return instance, nil
@@ -98,5 +99,8 @@ func (l *Logger) Fatal(msg string, keysAndValues ...interface{}) {
 }
 
 func (l *Logger) Sync() error {
-	return l.zap.Sync()
+	if l.zap != nil {
+		return l.zap.Sync()
+	}
+	return nil
 }
