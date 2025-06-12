@@ -2,7 +2,7 @@ package main
 
 import (
 	"thanhnt208/vcs-sms/auth-service/api/routes"
-	"thanhnt208/vcs-sms/auth-service/configs"
+	"thanhnt208/vcs-sms/auth-service/config"
 	"thanhnt208/vcs-sms/auth-service/infrastructure"
 	"thanhnt208/vcs-sms/auth-service/internal/delivery/rest"
 	"thanhnt208/vcs-sms/auth-service/internal/repositories"
@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	cfg := configs.LoadConfig()
+	cfg := config.LoadConfig()
 
 	logger, err := logger.NewLogger(cfg.LogLevel, cfg.LogFile)
 	if err != nil {

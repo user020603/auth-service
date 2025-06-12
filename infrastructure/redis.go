@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"context"
-	"thanhnt208/vcs-sms/auth-service/configs"
+	"thanhnt208/vcs-sms/auth-service/config"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -12,7 +12,7 @@ type Redis struct {
 	client *redis.Client
 }
 
-func NewRedis(cfg *configs.Config) (IRedis, error) {
+func NewRedis(cfg *config.Config) (IRedis, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddr,
 		Password: cfg.RedisPassword,

@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"thanhnt208/vcs-sms/auth-service/configs"
+	"thanhnt208/vcs-sms/auth-service/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(configs.LoadConfig().JWTSecret)
+var jwtSecret = []byte(config.LoadConfig().JWTSecret)
 
 type Claims struct {
 	UserID   uint   `json:"user_id"`
