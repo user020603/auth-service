@@ -9,9 +9,12 @@ import (
 
 func SetupAuthRoutes(h *rest.AuthHandler) *gin.Engine {
 	router := gin.Default()
-	router.POST("/auth/register", h.Register)
-	router.POST("/auth/login", h.Login)
-	router.POST("/auth/refresh-token", middlewares.JWTAuthMiddleware(), h.RefreshToken)
-	router.POST("/auth/logout", middlewares.JWTAuthMiddleware(), h.Logout)
+	router.POST("/register", h.Register)
+	router.POST("/login", h.Login)
+	router.POST("/refresh-token", middlewares.JWTAuthMiddleware(), h.RefreshToken)
+	router.POST("/logout", middlewares.JWTAuthMiddleware(), h.Logout)
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 	return router
 }
