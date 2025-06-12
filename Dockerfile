@@ -16,5 +16,6 @@ WORKDIR /app
 EXPOSE 8000
 
 COPY --from=builder /app/auth-service .
+COPY config/ ./config/
 
 CMD ["./auth-service"]
