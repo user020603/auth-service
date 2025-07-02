@@ -2,8 +2,9 @@ package infrastructure
 
 import (
 	"context"
-	"thanhnt208/vcs-sms/auth-service/config"
 	"time"
+
+	"thanhnt208/vcs-sms/auth-service/config"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -21,13 +22,20 @@ func NewRedis(cfg *config.Config) (IRedis, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	if err := rdb.Ping(ctx).Err(); err != nil {
+
+	if err := pingRedis(ctx, rdb); err != nil {
 		return nil, err
 	}
 
-	return &Redis{
-		client: rdb,
-	}, nil
+	return &Redis{client: rdb}, nil
+}
+
+func NewRedisWithClient(client *redis.Client) IRedis {
+	return &Redis{client: client}
+}
+
+func pingRedis(ctx context.Context, client *redis.Client) error {
+	return client.Ping(ctx).Err()
 }
 
 func (r *Redis) GetClient() *redis.Client {
