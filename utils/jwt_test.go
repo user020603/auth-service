@@ -13,7 +13,8 @@ func TestGenerateAndParseJWT(t *testing.T) {
 	role := "admin"
 	expiry := time.Minute * 5
 
-	tokenStr, err := GenerateJWT(userID, username, role, expiry)
+	scopes := []string{}
+	tokenStr, err := GenerateJWT(userID, username, role, scopes, expiry)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenStr, "Token should not be empty")
 
