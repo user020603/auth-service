@@ -71,18 +71,23 @@ func (s *authService) Login(input LoginInput) (string, string, error) {
 	if err != nil {
 		return "", "", errors.New("invalid username or password")
 	}
+	if user == nil {
+		s.logger.Error("User not found", "username", input.Username)
+		return "", "", errors.New("invalid username or password")
+	}
 
 	if !utils.CheckPasswordHash(input.Password, user.Password) {
 		return "", "", errors.New("invalid username or password")
 	}
 
-	accessToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, time.Hour)
+	scopes := getScopesForRole(user.Role)
+	accessToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, scopes, time.Hour)
 	if err != nil {
 		s.logger.Error("Failed to generate access token", "username", user.Username, "error", err)
 		return "", "", err
 	}
 
-	refreshToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, time.Hour*24*7)
+	refreshToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, scopes, time.Hour*24*7)
 	if err != nil {
 		s.logger.Error("Failed to generate refresh token", "username", user.Username, "error", err)
 		return "", "", err
@@ -114,7 +119,8 @@ func (s *authService) RefreshToken(userID uint, refreshToken string) (string, er
 		return "", err
 	}
 
-	newAccessToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, time.Hour)
+	scopes := getScopesForRole(user.Role)
+	newAccessToken, err := utils.GenerateJWT(user.ID, user.Username, user.Role, scopes, time.Hour)
 	if err != nil {
 		s.logger.Error("Failed to generate new access token", "userID", userID, "error", err)
 		return "", err
@@ -130,4 +136,27 @@ func (s *authService) Logout(userID uint) error {
 		return err
 	}
 	return nil
+}
+
+func getScopesForRole(role string) []string {
+	switch role {
+	case "admin":
+		return []string{
+			"container:read",
+			"container:create",
+			"container:update",
+			"container:delete",
+			"container:import",
+			"container:export",
+			"mail:send",
+		}
+	case "user":
+		return []string{
+			"container:read",
+			"container:create",
+			"mail:send",
+		}
+	default:
+		return []string{}
+	}
 }
