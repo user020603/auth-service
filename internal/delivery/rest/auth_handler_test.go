@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"thanhnt208/vcs-sms/auth-service/internal/services"
+	"thanhnt208/vcs-sms/auth-service/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,33 @@ func setupRegisterRouter(handler *AuthHandler) *gin.Engine {
 func setupLoginRouter(handler *AuthHandler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
-	r.POST("/login", handler.Register)
+	r.POST("/login", handler.Login)
+	return r
+}
+
+func setupRefreshRouter(handler *AuthHandler) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Set("claims", &utils.Claims{UserID: 1})
+		c.Next()
+	})
+
+	r.POST("/refresh-token", handler.RefreshToken)
+	return r
+}
+
+func setupLogoutRouter(handler *AuthHandler) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	r := gin.Default()
+
+	r.Use(func(c *gin.Context) {
+		c.Set("claims", &utils.Claims{UserID: 1})
+		c.Next()
+	})
+
+	r.POST("/logout", handler.Logout)
 	return r
 }
 
@@ -161,10 +188,10 @@ func TestAuthHandler_Login_Success(t *testing.T) {
 	}
 	mockService.On("Login", input).Return("access-token-123", "refresh-token-123", nil)
 
-	reqBody := `
+	reqBody := `{
 		"username": "testuser",
 		"password": "secret"
-	`
+	}`
 	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBufferString(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -194,4 +221,127 @@ func TestAuthHandler_Login_InvalidJSON(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), `"error"`)
 	mockService.AssertNotCalled(t, "Login")
+}
+
+func TestAuthHandler_Login_ServiceError(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupLoginRouter(handler)
+
+	input := services.LoginInput{
+		Username: "testuser",
+		Password: "wrongpass",
+	}
+	mockService.On("Login", input).Return("", "", errors.New("invalid credentials"))
+
+	reqBody := `{
+		"username": "testuser",
+		"password": "wrongpass"
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBufferString(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), `"error":"invalid username or password"`)
+}
+
+func TestAuthHandler_RefreshToken_Success(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupRefreshRouter(handler)
+
+	mockService.On("RefreshToken", uint(1), "valid-refresh-token").Return("new-access-token", nil)
+
+	reqBody := `{
+		"refreshToken": "valid-refresh-token"
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/refresh-token", bytes.NewBufferString(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"accessToken":"new-access-token"`)
+	assert.Contains(t, w.Body.String(), `"tokenType":"Bearer"`)
+}
+
+func TestAuthHandler_RefreshToken_InvalidJSON(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupRefreshRouter(handler)
+
+	reqBody := `{}`
+	req := httptest.NewRequest(http.MethodPost, "/refresh-token", bytes.NewBufferString(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), `"error"`)
+	mockService.AssertNotCalled(t, "RefreshToken")
+}
+
+func TestAuthHandler_RefreshToken_ServiceError(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupRefreshRouter(handler)
+
+	mockService.On("RefreshToken", uint(1), "bad-refresh-token").Return("", errors.New("invalid refresh token"))
+
+	reqBody := `{
+		"refreshToken": "bad-refresh-token"
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/refresh-token", bytes.NewBufferString(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Contains(t, w.Body.String(), `"error":"invalid refresh token"`)
+}
+
+func TestAuthHandler_Logout_Success(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupLogoutRouter(handler)
+
+	mockService.On("Logout", uint(1)).Return(nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"message":"User logged out successfully"`)
+	mockService.AssertExpectations(t)
+}
+
+func TestAuthHandler_Logout_Failure(t *testing.T) {
+	mockService := new(MockAuthService)
+	mockLogger := &MockLogger{}
+	handler := NewAuthHandler(mockService, mockLogger)
+	router := setupLogoutRouter(handler)
+
+	mockService.On("Logout", uint(1)).Return(errors.New("logout failed"))
+
+	req := httptest.NewRequest(http.MethodPost, "/logout", nil)
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Contains(t, w.Body.String(), `"error":"logout failed"`)
+	mockService.AssertExpectations(t)
 }
