@@ -13,7 +13,7 @@ type Redis struct {
 	client *redis.Client
 }
 
-func NewRedis(cfg *config.Config) (IRedis, error) {
+var NewRedis = func(cfg *config.Config) (IRedis, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddr,
 		Password: cfg.RedisPassword,

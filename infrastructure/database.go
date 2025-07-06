@@ -14,7 +14,7 @@ type Database struct {
 	db *gorm.DB
 }
 
-func NewDatabase(cfg *config.Config) (IDatabase, error) {
+var NewDatabase = func(cfg *config.Config) (IDatabase, error) {
 	dsn := buildDSN(cfg)
 	db, err := openGormDB(dsn, nil)
 	if err != nil {
