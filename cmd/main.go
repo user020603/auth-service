@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// App chứa các phụ thuộc của ứng dụng
 type App struct {
 	Logger      logger.ILogger
 	Config      *config.Config
@@ -47,15 +46,12 @@ var fatalfFunc = func(format string, v ...interface{}) {
 	exitFunc(1)
 }
 
-// NewApp khởi tạo và trả về một instance mới của App
 func NewApp(cfg *config.Config) (*App, error) {
-	// Khởi tạo Logger
 	appLogger, err := newLoggerFunc(cfg.LogLevel, cfg.LogFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
-	// Kết nối Database
 	db, err := infrastructure.NewDatabase(cfg)
 	if err != nil {
 		appLogger.Error("Failed to connect to database", "error", err)
@@ -63,7 +59,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}
 	appLogger.Info("Connected to database", "host", cfg.DBHost, "port", cfg.DBPort)
 
-	// Kết nối Redis
 	redisClient, err := infrastructure.NewRedis(cfg)
 	if err != nil {
 		appLogger.Error("Failed to connect to Redis", "error", err)
@@ -71,15 +66,12 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}
 	appLogger.Info("Connected to Redis", "address", cfg.RedisAddr)
 
-	// Khởi tạo các Repositories
 	userRepo := repositories.NewUserRepository(db.GetDB())
 	tokenRepo := repositories.NewTokenRepository(redisClient.GetClient())
 
-	// Khởi tạo Service và Handler
 	authService := services.NewAuthService(userRepo, tokenRepo, appLogger)
 	authHandler := rest.NewAuthHandler(authService, appLogger)
 
-	// Thiết lập Routes
 	router := routes.SetupAuthRoutes(authHandler)
 
 	return &App{
@@ -91,7 +83,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}, nil
 }
 
-// Run khởi động server
 func (a *App) Run() {
 	port := a.Config.ServerPort
 	a.Logger.Info("Starting server", "port", port)
@@ -101,7 +92,6 @@ func (a *App) Run() {
 	}
 }
 
-// Close giải phóng tài nguyên
 func (a *App) Close() {
 	if a.DB != nil {
 		a.DB.Close()
@@ -111,13 +101,12 @@ func (a *App) Close() {
 	}
 }
 
-// runMain tách logic khỏi main để dễ test
 var runMain = func() error {
 	cfg := loadConfigFunc()
 
 	app, err := newAppFunc(cfg)
 	if err != nil {
-		return fmt.Errorf("Failed to setup application: %w", err)
+		return fmt.Errorf("failed to setup application: %w", err)
 	}
 	defer closeFunc(app)
 

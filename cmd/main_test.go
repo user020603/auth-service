@@ -54,7 +54,6 @@ func (m *MockLogger) Warn(msg string, keysAndValues ...interface{}) {
 func (l *MockLogger) Sync() error { return nil }
 
 func (m *MockDatabase) GetDB() *gorm.DB {
-	// Trong test chúng ta không cần đến DB thật
 	return nil
 }
 
@@ -68,16 +67,13 @@ func (m *MockDatabase) Ping(ctx context.Context) error {
 	return args.Error(0)
 }
 
-// Đảm bảo MockDatabase implements infrastructure.IDatabase
 var _ infrastructure.IDatabase = (*MockDatabase)(nil)
 
-// MockRedisClient là một mock cho infrastructure.IRedis
 type MockRedisClient struct {
 	mock.Mock
 }
 
 func (m *MockRedisClient) GetClient() *redis.Client {
-	// Trong test chúng ta không cần đến Redis client thật
 	return nil
 }
 
@@ -91,9 +87,6 @@ func (m *MockRedisClient) Ping(ctx context.Context) error {
 	return args.Error(0)
 }
 
-// --- Helper Functions ---
-
-// newTestConfig tạo một cấu hình giả để test
 func newTestConfig() *config.Config {
 	return &config.Config{
 		LogLevel:   "debug",
@@ -105,11 +98,8 @@ func newTestConfig() *config.Config {
 	}
 }
 
-// --- Tests ---
-
 func TestNewApp_Success(t *testing.T) {
 	t.Log("Running TestNewApp_Success")
-	// Sắp xếp (Arrange)
 	cfg := newTestConfig()
 	originalNewDatabase := infrastructure.NewDatabase
 	infrastructure.NewDatabase = func(c *config.Config) (infrastructure.IDatabase, error) {
@@ -123,20 +113,16 @@ func TestNewApp_Success(t *testing.T) {
 	}
 	defer func() { infrastructure.NewRedis = originalNewRedis }()
 
-	// Hành động (Act)
 	app, err := NewApp(cfg)
 
-	// Khẳng định (Assert)
 	assert.NoError(t, err)
 	assert.NotNil(t, app)
 	assert.NotNil(t, app.Logger)
 	assert.NotNil(t, app.Router)
 	assert.Equal(t, cfg, app.Config)
 
-	// Dọn dẹp file log được tạo ra
 	defer os.Remove(cfg.LogFile)
 
-	// Kiểm tra xem các phương thức Close có được gọi không
 	mockDB := app.DB.(*MockDatabase)
 	mockRedis := app.RedisClient.(*MockRedisClient)
 	mockDB.On("Close").Return(nil)
@@ -148,62 +134,50 @@ func TestNewApp_Success(t *testing.T) {
 	mockRedis.AssertCalled(t, "Close")
 }
 
-// ...existing code...
 func TestNewApp_Fail_DatabaseConnection(t *testing.T) {
 	t.Log("Running TestNewApp_Fail_DatabaseConnection")
 	// Sắp xếp (Arrange)
 	cfg := newTestConfig()
 	dbError := errors.New("database connection failed")
 
-	// Ghi đè hàm NewDatabase để trả về lỗi
 	originalNewDatabase := infrastructure.NewDatabase
 	infrastructure.NewDatabase = func(c *config.Config) (infrastructure.IDatabase, error) {
 		return nil, dbError
 	}
 	defer func() { infrastructure.NewDatabase = originalNewDatabase }()
 
-	// Hành động (Act)
 	app, err := NewApp(cfg)
 
-	// Khẳng định (Assert)
 	assert.Error(t, err)
 	assert.Nil(t, app)
 	assert.Contains(t, err.Error(), dbError.Error())
 
-	// Dọn dẹp file log
 	defer os.Remove(cfg.LogFile)
 }
 
-// ...existing code...
 func TestNewApp_Fail_RedisConnection(t *testing.T) {
 	t.Log("Running TestNewApp_Fail_RedisConnection")
-	// Sắp xếp (Arrange)
 	cfg := newTestConfig()
 	redisError := errors.New("redis connection failed")
 
-	// Mock NewDatabase thành công
 	originalNewDatabase := infrastructure.NewDatabase
 	infrastructure.NewDatabase = func(c *config.Config) (infrastructure.IDatabase, error) {
 		return &MockDatabase{}, nil
 	}
 	defer func() { infrastructure.NewDatabase = originalNewDatabase }()
 
-	// Ghi đè hàm NewRedis để trả về lỗi
 	originalNewRedis := infrastructure.NewRedis
 	infrastructure.NewRedis = func(c *config.Config) (infrastructure.IRedis, error) {
 		return nil, redisError
 	}
 	defer func() { infrastructure.NewRedis = originalNewRedis }()
 
-	// Hành động (Act)
 	app, err := NewApp(cfg)
 
-	// Khẳng định (Assert)
 	assert.Error(t, err)
 	assert.Nil(t, app)
 	assert.Contains(t, err.Error(), redisError.Error())
 
-	// Dọn dẹp file log
 	defer os.Remove(cfg.LogFile)
 }
 
@@ -213,7 +187,6 @@ func TestNewApp_Fail_LoggerInitialization(t *testing.T) {
 	cfg := newTestConfig()
 	logErr := errors.New("logger init failed")
 
-	// Ghi đè logger
 	originalLoggerFunc := newLoggerFunc
 	newLoggerFunc = func(level, file string) (logger.ILogger, error) {
 		return nil, logErr
@@ -230,7 +203,6 @@ func TestNewApp_Fail_LoggerInitialization(t *testing.T) {
 func TestApp_Run_FailToStartServer(t *testing.T) {
 	t.Log("Running TestApp_Run_FailToStartServer")
 
-	// Ghi log vào memory
 	mockLogger := &MockLogger{}
 	mockLogger.On("Info", "Starting server", "port", "9999").Return()
 	mockLogger.On("Error", "Failed to start server", "error", mock.Anything).Return()
@@ -242,7 +214,6 @@ func TestApp_Run_FailToStartServer(t *testing.T) {
 		Router: gin.New(), // Có thể là dummy, vì ta ghi đè Run
 	}
 
-	// Ghi đè runRouterFunc để trả lỗi
 	originalRunRouterFunc := runRouterFunc
 	runRouterFunc = func(router *gin.Engine, port string) error {
 		return errors.New("mock server failed to start")
