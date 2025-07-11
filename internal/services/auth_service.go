@@ -138,25 +138,17 @@ func (s *authService) Logout(userID uint) error {
 	return nil
 }
 
+var roleScopes = map[string][]string{
+	"admin": {
+		"container:read", "container:create", "container:update",
+		"container:delete", "container:import", "container:export",
+		"mail:send_uptime_ratio", "mail:send_uptime_duration",
+	},
+	"user": {
+		"container:read", "container:create", "container:export",
+	},
+} 
+
 func getScopesForRole(role string) []string {
-	switch role {
-	case "admin":
-		return []string{
-			"container:read",
-			"container:create",
-			"container:update",
-			"container:delete",
-			"container:import",
-			"container:export",
-			"mail:send",
-		}
-	case "user":
-		return []string{
-			"container:read",
-			"container:create",
-			"mail:send",
-		}
-	default:
-		return []string{}
-	}
+	return roleScopes[role]
 }
